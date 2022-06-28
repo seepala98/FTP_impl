@@ -1,7 +1,5 @@
  <b>Project One: File Transfer Protocol-Client-Server</b>
 
- <b>Done by: Muhammad Areeb (maa1150) and Mohammed Arham (maj596)</b>
-
 The program was written and compiled on Catalina Mac OS using GCC compiler. <b></b>
 
 To establish connections between the server and clients, this application employs sockets. Multiple clients can connect to and communicate with the server using the select () function. Once clients have connected, they must authenticate to execute any more commands. Currently, the authentication procedure uses arrays of usernames and passwords that are kept in a separate .txt file. Users don't need to authenticate again after the initial process is finished. 
