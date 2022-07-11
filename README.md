@@ -1,4 +1,4 @@
- <b>Project One: File Transfer Protocol-Client-Server</b>
+ <b>Project: File Transfer Protocol-Client-Server</b>
 
 The program was written and compiled on Catalina Mac OS using GCC compiler. <b></b>
 
