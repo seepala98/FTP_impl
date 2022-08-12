@@ -9,3 +9,5 @@ int tcpHelper(int * data_port, char * IPInfo);
 int storHelperClient(char * filename, int srv_socket);
 int retrHelperClient(char * filename, int srv_socket);
 int listHelperPwd(char * command, int srv_socket);
+int cdupHelper(char * command, int srv_socket);
+void noopHelper(int server_fd);

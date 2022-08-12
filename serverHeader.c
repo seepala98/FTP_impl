@@ -38,6 +38,9 @@ int initiate_comm(int client_fd, fd_set * authen_fdset, fd_set * user_fdset, int
         if (strcmp(command, "USER") == 0 || strcmp(command, "PASS") == 0) {
             strcpy(response, "230 User logged in, proceed.");
             send(client_fd, response, strlen(response), 0);
+        } else if (strcmp(command, "NOOP") == 0){
+            // use noopHelper to send noop to server    
+            noopHelper(client_fd);
         } else if (strcmp(command, "PORT") == 0) {
 
             strcpy(response, "ready");
@@ -244,7 +247,52 @@ void * dataTransferHelper(void * s_arg) {
         strcpy(str, input);
 
         storHelper(arg);
-    } else if (strcmp(command, "ls") == 0 || strcmp(command, "pwd") == 0) {
+    // } else if (strcmp(command, "APPE") == 0) {
+    //     ARGS * arg = malloc(sizeof(ARGS));
+    //     arg -> client_sd = client_sd;
+    //     int len = strlen(input) + 1;
+    //     char * str = (char * ) malloc(len * sizeof(char));
+    //     arg -> input = str;
+    //     strcpy(str, input);
+    //     appeHelper(arg);
+    // // } else if (strcmp(command, "LIST") == 0) {
+    // //     listHelper( & client_sd);
+    // } else if (strcmp(command, "RMD") == 0) {
+    //     ARGS * arg = malloc(sizeof(ARGS));
+    //     arg -> client_sd = client_sd;
+    //     int len = strlen(input) + 1;
+    //     char * str = (char * ) malloc(len * sizeof(char));
+    //     arg -> input = str;
+    //     strcpy(str, input);
+    //     rmdHelper(arg);
+    // } else if (strcmp(command, "MKD") == 0) {
+    //     ARGS * arg = malloc(sizeof(ARGS));
+    //     arg -> client_sd = client_sd;
+    //     int len = strlen(input) + 1;
+    //     char * str = (char * ) malloc(len * sizeof(char));
+    //     arg -> input = str;
+    //     strcpy(str, input);
+    //     mkdHelper(arg);
+    // } else if (strcmp(command, "DELE") == 0) {
+    //     deleHelper( & client_sd);
+    // } else if (strcmp(command, "RNFR") == 0) {
+    //     rnfrHelper( & client_sd);
+    // } else if (strcmp(command, "RNTO") == 0) {
+    //     rntoHelper( & client_sd);
+    // } else if (strcmp(command, "PWD") == 0) {
+    //     pwdHelper( & client_sd);
+    // } else if (strcmp(command, "CWD") == 0) {
+    //     cwdHelper( & client_sd);
+    // } else if (strcmp(command, "CDUP") == 0) {
+    //     cdupHelper( & client_sd);
+    // } else if (strcmp(command, "QUIT") == 0) {
+    //     quitHelper( & client_sd);
+    // } else if (strcmp(command, "HELP") == 0) {
+    //     helpHelper( & client_sd);
+    } else if (strcmp(command, "NOOP") == 0) {
+        noopHelper( & client_sd);
+    } 
+    else if (strcmp(command, "ls") == 0 || strcmp(command, "pwd") == 0) {
         ARGS * arg = (ARGS * ) malloc(sizeof(ARGS));
         arg -> client_sd = client_sd;
 
@@ -336,6 +384,25 @@ void * retrHelper(void * client_sd_ptr) {
         fclose(fptr);
         close(client_sd);
     }
+    return NULL;
+}
+
+// noop command helper  This command does not affect any parameters or previously
+// entered commands. It specifies no action other than that the
+// server send an OK reply.
+
+void * noopHelper(void * client_sd_ptr) {
+    int client_sd = * (int * )(client_sd_ptr);
+    char buffer[1500];
+    bzero(buffer, sizeof(buffer));
+    int bytes = recv(client_sd, buffer, sizeof(buffer), 0);
+    if (bytes < 0)
+        perror("Recv");
+    else {
+        printf("-->%s\n", buffer);
+        send(client_sd, "OK", 2, 0);
+    }
+    close(client_sd);
     return NULL;
 }
 

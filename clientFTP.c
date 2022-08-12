@@ -10,7 +10,6 @@
 
 int main(int argc, char ** argv) {
     if (argc == NUM_INPUT && atoi(argv[2]) != PORT_NUM) {
-
         printf("run: ./FTPClient <ftp-server-ip-address> <ftp-server-port-number> or ./FTPClient\n");
         printf("Port number: %d\n", PORT_NUM);
         exit(-1);
@@ -36,8 +35,7 @@ int main(int argc, char ** argv) {
     if ((argc == NUM_INPUT) && (inet_pton(AF_INET, argv[1], & server_address.sin_addr) <= 0)) {
         printf("Check input IP Address\n");
         printf("run: ./FTPClient <ftp-server-ip-address> <ftp-server-port-number> \n or run: ./FTPClient\n");
-        printf("Port number: %d\n", PORT_NUM);
-        exit(-1);
+         exit(-1);
     } else {
         server_address.sin_addr.s_addr = htonl(INADDR_ANY);
 

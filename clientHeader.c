@@ -15,14 +15,12 @@ int cmdRunner(char * buffer, char * command, char * input, int server_fd, int * 
     int input_len = strlen(input);
 
     if (strcmp(command, "USER") == 0 && input_len != 0) {
-
         send(server_fd, buffer, buff_len, 0);
         displayHelper(server_fd);
     } else if (strcmp(command, "PASS") == 0 && input_len != 0) {
         send(server_fd, buffer, buff_len, 0);
         displayHelper(server_fd);
     } else if (strcmp(command, "STOR") == 0 && input_len != 0) {
-
         FILE * fptr = fopen(input, "r");
         if (!fptr) {
             perror("550 No such file or directory.");
@@ -83,8 +81,27 @@ int cmdRunner(char * buffer, char * command, char * input, int server_fd, int * 
         } else {
             printf("%s\n", message);
         }
-
-    } else if (strcmp(command, "CWD") == 0 || strcmp(command, "PWD") == 0) {
+    } 
+    // // Change to Parent Directory
+    // else if (strcmp(command, "CDUP") == 0 ){
+    //     int srv_socket = portClient(server_fd, data_port);
+    //     if (srv_socket == -1) return 0;
+    //     displayHelper(server_fd);
+    //     send(server_fd, buffer, buff_len, 0);
+    //     char message[BUFFER_SIZE];
+    //     bzero( & message, BUFFER_SIZE);
+    //     if (recv(server_fd, message, sizeof(message), 0) < 0) {
+    //         perror("Recv");
+    //     } else if (strcmp(message, "cdup") == 0) {
+    //         // cdupHelper(command, srv_socket);
+    //         // chdir((char *) "..");
+    //         printf("250 CWD command successful.\n");
+    //     } else {
+    //         printf("%s\n", message);
+    //     }
+        
+    // }
+    else if (strcmp(command, "CWD") == 0 || strcmp(command, "PWD") == 0) {
 
         send(server_fd, buffer, buff_len, 0);
         displayHelper(server_fd);
@@ -101,7 +118,11 @@ int cmdRunner(char * buffer, char * command, char * input, int server_fd, int * 
     } else if ((strcmp(command, "!CWD") == 0) && input_len != 0) {
         if (chdir(input) == -1)
             perror("chdir");
-    } else if (strcmp(command, "QUIT") == 0) {
+    } else if (strcmp(command, "NOOP")==0) {
+        send(server_fd, buffer, buff_len, 0);
+        noopHelper(server_fd);
+    }
+    else if (strcmp(command, "QUIT") == 0) {
         send(server_fd, buffer, buff_len, 0);
         displayHelper(server_fd);
 
@@ -156,6 +177,23 @@ void displayHelper(int server_fd) {
     }
 }
 
+
+// noop command helper  This command does not affect any parameters or previously
+// entered commands. It specifies no action other than that the
+// server send an OK reply.
+
+void noopHelper(int server_fd) {
+    char message[BUFFER_SIZE];
+    bzero( & message, BUFFER_SIZE);
+    if (recv(server_fd, message, sizeof(message), 0) < 0) {
+        perror("Recv");
+        exit(-1);
+    } else {
+        printf("OK \n");
+        printf("%s \n", message);
+    }
+}
+
 //deals with retr command
 int retrHelperClient(char * filename, int srv_socket) {
 
@@ -194,6 +232,24 @@ int listHelperPwd(char * command, int srv_socket) {
     close(srv_socket);
     return 0;
 }
+
+// // change to parent directory 
+// int cdupHelper(char *command, int srv_socket){
+//     send(srv_socket, command, strlen(command), 0);
+//     char message[BUFFER_SIZE];
+//     bzero( & message, BUFFER_SIZE);
+//     if (recv(srv_socket, message, sizeof(message), 0) < 0) {
+//         perror("Recv");
+//     } else if (strcmp(message, "cdup") == 0) {
+//         // move to parent directory 
+//         chdir("..");
+//         printf("250 CWD command successful.\n");
+//     } else {
+//         printf("%s\n", message);
+//     }
+//     close(srv_socket);
+//     return 0;
+// }
 
 int portClient(int server_fd, int * data_port) {
     //arithemtic to deal with port numbers

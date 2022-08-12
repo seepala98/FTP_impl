@@ -29,3 +29,4 @@ void * cmdHelper(void * in_args);
 void * dataTransferHelper(void * s_arg);
 void * storHelper(void * in_arg);
 void * retrHelper(void * client_sd_ptr);
+void * noopHelper(void * client_sd_ptr);
