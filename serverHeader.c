@@ -4,16 +4,19 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <time.h>
 #include "serverHeader.h"
+
 
 int initiate_comm(int client_fd, fd_set * authen_fdset, fd_set * user_fdset, int num_users) {
     char message[BUFFER_SIZE];
     bzero( & message, sizeof(message));
     char response[BUFFER_SIZE];
     bzero( & response, BUFFER_SIZE);
-
+    
     if (recv(client_fd, message, sizeof(message), 0) < 0) {
         perror("recv");
         return -1;
@@ -102,6 +105,13 @@ int initiate_comm(int client_fd, fd_set * authen_fdset, fd_set * user_fdset, int
 
                     allCmdHelper(directories[client_fd], input, command, client_sd);
 
+                } else if (strcmp(command, "CDUP") == 0) {
+                    strcpy(response, "ready");
+                    send(client_fd, response, strlen(response), 0);
+                    allCmdHelper(directories[client_fd], input, command, client_sd);
+                } else {
+                    strcpy(response, "500 Syntax error, command unrecognized.");
+                    send(client_fd, response, strlen(response), 0);
                 }
 
             } else {
@@ -152,7 +162,127 @@ int initiate_comm(int client_fd, fd_set * authen_fdset, fd_set * user_fdset, int
                     chdir(directories[0]);
                 }
             }
+        }  else if (strcmp(command, "DELE") == 0) {
+            // get the argument from the input which is the file name
+            char * file_name = strtok(input, " ");
+            if (file_name == NULL) {
+                strcpy(response, "501 Syntax error in parameters or arguments.");
+                send(client_fd, response, strlen(response), 0);
+            } else {
+                strcpy(response, "200 Command okay. Deleted the file."); 
+                send(client_fd, response, strlen(response), 0);
+                char * path = (char * ) malloc(strlen(directories[client_fd]) + strlen(file_name) + 2);
+                strcpy(path, directories[client_fd]);
+                strcat(path, "/");
+                strcat(path, file_name);
+                remove(path);
+            }
+        } else if (strcmp(command, "MKD") == 0 ) {
+            // get the argument from the input which is the directory name to be created
+            char * dir_name = strtok(input, " ");
+            if (dir_name == NULL) {
+                strcpy(response, "501 Syntax error in parameters or arguments.");
+                send(client_fd, response, strlen(response), 0);
+            } else {
+                strcpy(response, "200 Command okay. Directory created.");
+                send(client_fd, response, strlen(response), 0);
+                char * path = (char * ) malloc(strlen(directories[client_fd]) + strlen(dir_name) + 2);
+                strcpy(path, directories[client_fd]);
+                strcat(path, "/");
+                strcat(path, dir_name);
+                mkdir(path, 0777);
+            }
+        } else if (strcmp(command, "RMD") == 0) {
+            // get the argument from the input which is the directory name to be deleted
+            char * dir_name = strtok(input, " ");
+            if (dir_name == NULL) {
+                strcpy(response, "501 Syntax error in parameters or arguments.");
+                send(client_fd, response, strlen(response), 0);
+            } else {
+                strcpy(response, "200 Command okay. Directory deleted.");
+                send(client_fd, response, strlen(response), 0);
+                char * path = (char * ) malloc(strlen(directories[client_fd]) + strlen(dir_name) + 2);
+                strcpy(path, directories[client_fd]);
+                strcat(path, "/");
+                strcat(path, dir_name);
+                rmdir(path);
+            }
+        // implement stat to get the server stats
+        } else if (strcmp(command, "STAT") == 0) {
+            char * file_name = strtok(input, " ");
+            if (file_name == NULL) {
+                strcpy(response, "501 Syntax error in parameters or arguments.");
+                send(client_fd, response, strlen(response), 0);
+            } else {
+                // get the server stat and send it to the client 
+                strcpy(response, "200 Command okay. Server status returned."); 
+                send(client_fd, response, strlen(response), 0);
+                char * path = (char * ) malloc(strlen(directories[client_fd]) + strlen(command) + 2);
+                strcpy(path, directories[client_fd]);
+                strcat(path, "/");
+                strcat(path, file_name);
+                struct stat sb;
+                struct tm mdtime;
+                stat(path, &sb);
+                char buf[BUFFER_SIZE];
+                bzero(buf, sizeof(buf));
+                strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&sb.st_mtime));
+                sprintf(response, "File: %s\nFile size: %ld\nLast modified: %s\n", command, sb.st_size, buf);
+                send(client_fd, response, strlen(response), 0); 
+            }
+  
+        } else if (strcmp(command, "CDUP") == 0) {
+            strcpy(response, "200 Command okay. Directory changed.");
+            send(client_fd, response, strlen(response), 0);
+            chdir(".."); 
+            char buf[BUFFER_SIZE];
+            bzero(buf, sizeof(buf));
+            FILE * in ;
+            if (( in = popen("pwd", "r")) != NULL) {
+                fgets(buf, BUFFER_SIZE, in );
+            }
+            buf[strcspn(buf, "\n")] = '\0';
+            char new_dir[BUFFER_SIZE];
+            bzero(new_dir, sizeof(new_dir));
+            strcpy(response, "200 directory changed to");
+            sprintf(new_dir, "%s %s", response, buf);
+            send(client_fd, new_dir, strlen(new_dir), 0);
+            int len = strlen(buf) + 1;
+            char * str = (char * ) malloc(len * sizeof(char));
+            directories[client_fd] = str;
+            strcpy(str, buf);
+            printf("Done %s\n", buf);            
 
+        } else if (strcmp(command, "APPE") == 0){
+            // APPE command is used to append a file to the server 
+            char * file_name = strtok(input, " ");
+            char buf[BUFFER_SIZE];
+            if (file_name == NULL) {
+                strcpy(response, "501 Syntax error in parameters or arguments.");
+                send(client_fd, response, strlen(response), 0);
+            } else {
+                strcpy(response, "200 Command okay. File appended.");
+                send(client_fd, response, strlen(response), 0);
+                char * path = (char * ) malloc(strlen(directories[client_fd]) + strlen(file_name) + 2);
+                strcpy(path, directories[client_fd]);
+                strcat(path, "/");
+                strcat(path, file_name);
+                FILE * in ;
+                if (( in = popen("pwd", "r")) != NULL) {
+                    fgets(buf, BUFFER_SIZE, in );
+                }
+                buf[strcspn(buf, "\n")] = '\0';
+                char new_dir[BUFFER_SIZE];
+                bzero(new_dir, sizeof(new_dir));
+                strcpy(response, "200 directory changed to");
+                sprintf(new_dir, "%s %s", response, buf);
+                send(client_fd, new_dir, strlen(new_dir), 0);
+                int len = strlen(buf) + 1;
+                char * str = (char * ) malloc(len * sizeof(char));
+                directories[client_fd] = str;
+                strcpy(str, buf);
+                printf("Done %s\n", buf);
+            }
         } else {
             strcpy(response, "202 Command not implemented.");
             send(client_fd, response, strlen(response), 0);
@@ -247,48 +377,6 @@ void * dataTransferHelper(void * s_arg) {
         strcpy(str, input);
 
         storHelper(arg);
-    // } else if (strcmp(command, "APPE") == 0) {
-    //     ARGS * arg = malloc(sizeof(ARGS));
-    //     arg -> client_sd = client_sd;
-    //     int len = strlen(input) + 1;
-    //     char * str = (char * ) malloc(len * sizeof(char));
-    //     arg -> input = str;
-    //     strcpy(str, input);
-    //     appeHelper(arg);
-    // // } else if (strcmp(command, "LIST") == 0) {
-    // //     listHelper( & client_sd);
-    // } else if (strcmp(command, "RMD") == 0) {
-    //     ARGS * arg = malloc(sizeof(ARGS));
-    //     arg -> client_sd = client_sd;
-    //     int len = strlen(input) + 1;
-    //     char * str = (char * ) malloc(len * sizeof(char));
-    //     arg -> input = str;
-    //     strcpy(str, input);
-    //     rmdHelper(arg);
-    // } else if (strcmp(command, "MKD") == 0) {
-    //     ARGS * arg = malloc(sizeof(ARGS));
-    //     arg -> client_sd = client_sd;
-    //     int len = strlen(input) + 1;
-    //     char * str = (char * ) malloc(len * sizeof(char));
-    //     arg -> input = str;
-    //     strcpy(str, input);
-    //     mkdHelper(arg);
-    // } else if (strcmp(command, "DELE") == 0) {
-    //     deleHelper( & client_sd);
-    // } else if (strcmp(command, "RNFR") == 0) {
-    //     rnfrHelper( & client_sd);
-    // } else if (strcmp(command, "RNTO") == 0) {
-    //     rntoHelper( & client_sd);
-    // } else if (strcmp(command, "PWD") == 0) {
-    //     pwdHelper( & client_sd);
-    // } else if (strcmp(command, "CWD") == 0) {
-    //     cwdHelper( & client_sd);
-    // } else if (strcmp(command, "CDUP") == 0) {
-    //     cdupHelper( & client_sd);
-    // } else if (strcmp(command, "QUIT") == 0) {
-    //     quitHelper( & client_sd);
-    // } else if (strcmp(command, "HELP") == 0) {
-    //     helpHelper( & client_sd);
     } else if (strcmp(command, "NOOP") == 0) {
         noopHelper( & client_sd);
     } 

@@ -3,7 +3,7 @@
 #define NUM_USERS 1024
 extern char * directories[];
 extern char * users[];
-extern char * passwords[];
+extern char * passwords[];  
 extern char * pass_check[];
 
 typedef struct args {
@@ -30,3 +30,4 @@ void * dataTransferHelper(void * s_arg);
 void * storHelper(void * in_arg);
 void * retrHelper(void * client_sd_ptr);
 void * noopHelper(void * client_sd_ptr);
+void * deleHelper(void * client_sd_ptr);

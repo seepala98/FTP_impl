@@ -11,3 +11,5 @@ int retrHelperClient(char * filename, int srv_socket);
 int listHelperPwd(char * command, int srv_socket);
 int cdupHelper(char * command, int srv_socket);
 void noopHelper(int server_fd);
+// deleHelper   
+void deleHelper(char * filename, int server_fd);
