@@ -8,12 +8,16 @@
 
 #include "clientHeader.h"
 
-int main(int argc, char ** argv) {
-    if (argc == NUM_INPUT && atoi(argv[2]) != PORT_NUM) {
+int main(int argc, char **argv)
+{
+    if (argc == NUM_INPUT && atoi(argv[2]) != PORT_NUM)
+    {
         printf("run: ./clientFTP <ftp-server-ip-address> <ftp-server-port-number> or ./FTPClient\n");
         printf("Port number: %d\n", PORT_NUM);
         exit(-1);
-    } else if (argc != 1 && argc != NUM_INPUT) {
+    }
+    else if (argc != 1 && argc != NUM_INPUT)
+    {
         printf("run: ./clientFTP <ftp-server-ip-address> <ftp-server-port-number> \n or: ./FTPClient\n");
         printf("Port number: %d\n", PORT_NUM);
         exit(-1);
@@ -21,49 +25,59 @@ int main(int argc, char ** argv) {
 
     // socket is initialized
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd < 0) {
+    // check if the server_fd is valid
+    if (server_fd < 0)
+    {
         perror("socket");
         return 0;
     }
 
     // connect is used here
     struct sockaddr_in server_address;
-    bzero( & server_address, sizeof(server_address));
+    bzero(&server_address, sizeof(server_address));
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(1025);
 
-    if ((argc == NUM_INPUT) && (inet_pton(AF_INET, argv[1], & server_address.sin_addr) <= 0)) {
+    // check if the server_address is valid
+    if ((argc == NUM_INPUT) && (inet_pton(AF_INET, argv[1], &server_address.sin_addr) <= 0))
+    {
         printf("Check input IP Address\n");
         printf("run: ./clientFTP <ftp-server-ip-address> <ftp-server-port-number> \n or run: ./FTPClient\n");
-         exit(-1);
-    } else {
+        exit(-1);
+    }
+    else
+    {
         server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-
     }
 
-    if (connect(server_fd, (struct sockaddr * ) & server_address, sizeof(server_address)) < 0) {
+    // connect to the server using the server_fd and server_address
+    if (connect(server_fd, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
+    {
         perror("connect");
         return 0;
-    } else
+    }
+    else
         printf("220 Service ready for new user.\n");
 
     int data_port = 1026;
 
     // send/recv job here
-    while (1) {
+    while (1)
+    {
         printf("ftp> ");
 
         char buffer[BUFFER_SIZE];
-        bzero( & buffer, sizeof(buffer));
+        bzero(&buffer, sizeof(buffer));
         char command[BUFFER_SIZE], input[BUFFER_SIZE];
-        bzero( & command, sizeof(command));
-        bzero( & input, sizeof(input));
+        bzero(&command, sizeof(command));
+        bzero(&input, sizeof(input));
 
         fgets(buffer, BUFFER_SIZE, stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
         sscanf(buffer, "%s %s", command, input);
 
-        if (cmdRunner(buffer, command, input, server_fd, & data_port) < 0)
+        // check if the command is valid
+        if (cmdRunner(buffer, command, input, server_fd, &data_port) < 0)
             break;
     }
     return 0;
